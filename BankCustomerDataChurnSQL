@@ -1,0 +1,108 @@
+USE [DSTraining]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROC [dbo].[BLD_WRK_CustomerDataChurn]
+-- =============================================
+-- Author:		Andrew Ackerman
+-- Create date: 03/29/2022
+-- Description:	RAW->WRK
+-- =============================================
+AS
+BEGIN
+-- =============================================
+-- DROP TABLE BLOCK
+-- =============================================
+
+IF OBJECT_ID('WRK_CustomerDataChurn') IS NOT NULL
+DROP TABLE [WRK_CustomerDataChurn]
+
+-- =============================================
+-- CREATE TABLE BLOCK
+-- =============================================
+
+CREATE TABLE [WRK_CustomerDataChurn]
+(
+	   [RowNumber]		INT IDENTITY(1,1)
+	  ,[Number]			VARCHAR(100)
+      ,[Gender]			VARCHAR(10)
+      ,[GivenName]		VARCHAR(1000)
+      ,[Surname]		VARCHAR(1000)
+      ,[StreetAddress]	VARCHAR(1000)
+      ,[City]			VARCHAR(1000)
+      ,[ZipCode]		VARCHAR(7)
+      ,[CountryFull]	VARCHAR(100)
+      ,[Birthday]		DATE
+      ,[Balance]		FLOAT
+      ,[InterestRate]	FLOAT
+)
+-- =============================================
+-- TRUNCATE TABLE BLOCK
+-- =============================================
+
+TRUNCATE TABLE [WRK_CustomerDataChurn]
+
+-- =============================================
+-- INSERT INTO BLOCK
+-- =============================================
+
+INSERT INTO [WRK_CustomerDataChurn]
+(  
+		[Number]
+		,[Gender]
+		,[GivenName]
+		,[Surname]
+		,[StreetAddress]
+		,[City]
+		,[ZipCode]
+		,[CountryFull]
+		,[Birthday]
+		,[Balance]
+		,[InterestRate]
+)
+
+SELECT
+		[Number]
+		,[Gender]
+		,[GivenName]
+		,[Surname]
+		,[StreetAddress]
+		,[City]
+		,[ZipCode]
+		,[CountryFull]
+		,[Birthday]
+		,[Balance]
+		,[InterestRate]
+FROM [RAW_CustomerDataChurn_20220329]
+
+-- (199987 rows affected)
+-- 199987 + 10 + 2 + 1 = 200,000 ROWS TOTAL VERIFIED
+
+--FILTERS:
+WHERE ISNUMERIC([Balance]) = 1 --SELECTS COLUMNS WHERE BALANCE IS NUMERIC (10 ROWS EXCLUDED)
+AND LEN([ZipCode]) <= 7		   --SELECTS COLUMNS WHERE ZIP CODE IS <7 7 (2 ROWS EXCLUDED)
+AND ISDATE([Birthday]) = 1     --SELECTS COLUMNS WHERE BIRTHDAY IS A DATE TYPE (1 ROW EXCLUDED)
+END
+
+-- =============================================
+-- ADDITIONAL EXCLUSIONS
+-- =============================================
+
+DELETE FROM [WRK_CustomerDataChurn]
+WHERE [Balance] < 0 
+--(1 ROW EXCLUDED)
+
+DELETE FROM [WRK_CustomerDataChurn]
+WHERE [ZipCode] NOT LIKE '___ ___'
+--(4 ROWS EXCLUDED)
+
+DELETE FROM [WRK_CustomerDataChurn]
+WHERE [Birthday] < '1922-12-31'
+--N/A
+
+DELETE FROM [WRK_CustomerDataChurn]
+WHERE [Birthday] > '2012-03-31'
+--(1 ROW ECLUDED)
